@@ -1,0 +1,169 @@
+apiVersion: policy.open-cluster-management.io/v1
+kind: Policy
+metadata:
+  name: policy-oauth-htpasswd
+  namespace: default
+  annotations:
+    policy.open-cluster-management.io/categories: CM Configuration Management, AC Access Control
+    policy.open-cluster-management.io/controls: AC-3 Access Enforcement
+    policy.open-cluster-management.io/standards: NIST SP 800-53
+  creationTimestamp: 2024-09-26T08:37:08Z
+  generation: 4
+  managedFields:
+    - apiVersion: policy.open-cluster-management.io/v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:policy.open-cluster-management.io/categories: {}
+            f:policy.open-cluster-management.io/controls: {}
+            f:policy.open-cluster-management.io/standards: {}
+        f:spec:
+          .: {}
+          f:disabled: {}
+          f:policy-templates: {}
+          f:remediationAction: {}
+      manager: unknown
+      operation: Update
+      time: 2024-09-28T09:18:38Z
+    - apiVersion: policy.open-cluster-management.io/v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:status:
+          .: {}
+          f:compliant: {}
+          f:placement: {}
+          f:status: {}
+      manager: governance-policy-propagator
+      operation: Update
+      subresource: status
+      time: 2024-10-03T11:25:41Z
+  resourceVersion: "3976245"
+  uid: d06321d4-5cc3-4509-901c-d4c91777f6c1
+spec:
+  disabled: false
+  policy-templates:
+    - objectDefinition:
+        apiVersion: policy.open-cluster-management.io/v1
+        kind: ConfigurationPolicy
+        metadata:
+          name: policy-oauth-htpasswd-secret
+        spec:
+          object-templates:
+            - complianceType: mustonlyhave
+              objectDefinition:
+                apiVersion: v1
+                data:
+                  htpasswd: Y2JkYy1kZXYxOiQyeSQwNSRGNzN6dFoyVlVybkZLZjNXU2FPVjFPTC9EUUxGUHNyWk5XdzlzZnY2aXNndm1EdllGL2VPcQpjYmRjLWRldjI6JDJ5JDA1JDVjTkJlMjE4MWZpYWEwdmtpb1ZRMS5rc0gyNUF1L1MvMTVGa3BiNlovdE0xOVV1elRXbGJpCmNiZGMtb3BzMTokMnkkMDUkNUNZc1NhbnpiaE1PcmJyTHJsb2N5TzZ6eEZ6SU1LazdKVDJXc2YzcUZ5RjJPQS44R0hocUMKcGF5bWVudC1kZXYxOiQyeSQwNSQyY24vUno0d004dzNaSXcwLnM0clZ1WUx1OU1aazBJbTdTZzFEemUxZnc3dVd2c2xiVXM5aQpwYXltZW50LW9wczE6JDJ5JDA1JEJjN0czaTZwV25Yb042LjN2MUZNZ08uTnhOR3RSanVMR1A0OUxaNGl0d3Rnd1VLQ3lEU2YuCg==
+                kind: Secret
+                metadata:
+                  name: htpass-secret
+                  namespace: openshift-config
+                type: Opaque
+          pruneObjectBehavior: DeleteIfCreated
+          remediationAction: enforce
+          severity: high
+    - objectDefinition:
+        apiVersion: policy.open-cluster-management.io/v1
+        kind: ConfigurationPolicy
+        metadata:
+          name: policy-oauth
+        spec:
+          object-templates:
+            - complianceType: musthave
+              objectDefinition:
+                apiVersion: config.openshift.io/v1
+                kind: OAuth
+                metadata:
+                  name: cluster
+                spec:
+                  identityProviders:
+                    - name: htpasswd_provider
+                      htpasswd:
+                        fileData:
+                          name: htpass-secret
+                      mappingMethod: claim
+                      type: HTPasswd
+          pruneObjectBehavior: DeleteIfCreated
+          remediationAction: enforce
+          severity: high
+  remediationAction: enforce
+status:
+  compliant: Compliant
+  placement:
+    - placement: bank-policy-set-placement
+      placementBinding: bank-policy-set-placement
+      policySet: bank-policy-set
+    - placement: policy-oauth-htpasswd-placement
+      placementBinding: policy-oauth-htpasswd-placement
+    - placement: policy-set-rbac-placement
+      placementBinding: policy-set-rbac-placement
+      policySet: policy-set-rbac
+  status:
+    - clustername: prod
+      clusternamespace: prod
+      compliant: Compliant
+---
+apiVersion: cluster.open-cluster-management.io/v1beta1
+kind: Placement
+metadata:
+  name: policy-oauth-htpasswd-placement
+  namespace: default
+  creationTimestamp: 2024-09-26T08:37:08Z
+  generation: 2
+  resourceVersion: "3976211"
+  uid: 6d85eb26-1b19-4023-848b-ca661fc0d040
+spec:
+  clusterSets: []
+  predicates:
+    - requiredClusterSelector:
+        labelSelector:
+          matchExpressions:
+            - key: env
+              operator: In
+              values:
+                - uat
+                - prod
+  tolerations:
+    - key: cluster.open-cluster-management.io/unreachable
+      operator: Exists
+    - key: cluster.open-cluster-management.io/unavailable
+      operator: Exists
+status:
+  conditions:
+    - lastTransitionTime: 2024-09-26T08:37:08Z
+      message: Placement configurations check pass
+      reason: Succeedconfigured
+      status: "False"
+      type: PlacementMisconfigured
+    - lastTransitionTime: 2024-09-26T08:37:08Z
+      message: All cluster decisions scheduled
+      reason: AllDecisionsScheduled
+      status: "True"
+      type: PlacementSatisfied
+  decisionGroups:
+    - clusterCount: 1
+      decisionGroupIndex: 0
+      decisionGroupName: ""
+      decisions:
+        - policy-oauth-htpasswd-placement-decision-1
+  numberOfSelectedClusters: 1
+---
+apiVersion: policy.open-cluster-management.io/v1
+kind: PlacementBinding
+metadata:
+  name: policy-oauth-htpasswd-placement
+  namespace: default
+  creationTimestamp: 2024-09-26T08:37:08Z
+  generation: 1
+  resourceVersion: "2714866"
+  uid: 0165c759-ea09-4cdf-aae9-9d671bfe366b
+placementRef:
+  name: policy-oauth-htpasswd-placement
+  apiGroup: cluster.open-cluster-management.io
+  kind: Placement
+subjects:
+  - name: policy-oauth-htpasswd
+    apiGroup: policy.open-cluster-management.io
+    kind: Policy
