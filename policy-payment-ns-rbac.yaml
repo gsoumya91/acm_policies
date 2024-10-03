@@ -1,0 +1,197 @@
+apiVersion: policy.open-cluster-management.io/v1
+kind: Policy
+metadata:
+  name: policy-rbac-payment-ns
+  namespace: default
+  creationTimestamp: 2024-09-28T10:00:35Z
+  generation: 1
+  managedFields:
+    - apiVersion: policy.open-cluster-management.io/v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:spec:
+          .: {}
+          f:disabled: {}
+          f:policy-templates: {}
+          f:remediationAction: {}
+      manager: unknown
+      operation: Update
+      time: 2024-09-28T10:00:35Z
+    - apiVersion: policy.open-cluster-management.io/v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:status:
+          .: {}
+          f:compliant: {}
+          f:placement: {}
+          f:status: {}
+      manager: governance-policy-propagator
+      operation: Update
+      subresource: status
+      time: 2024-10-03T17:19:39Z
+  resourceVersion: "3998892"
+  uid: ff123da6-99a9-4c39-a3ed-fcefb51253a3
+spec:
+  disabled: false
+  policy-templates:
+    - objectDefinition:
+        apiVersion: policy.open-cluster-management.io/v1
+        kind: ConfigurationPolicy
+        metadata:
+          name: policy-rbac-payment-ns
+        spec:
+          object-templates:
+            - complianceType: musthave
+              objectDefinition:
+                apiVersion: user.openshift.io/v1
+                kind: Group
+                metadata:
+                  name: payment-app
+                users:
+            - complianceType: musthave
+              objectDefinition:
+                apiVersion: user.openshift.io/v1
+                kind: Group
+                metadata:
+                  name: payment-dev
+                users:
+                  - payment-dev1
+            - complianceType: musthave
+              objectDefinition:
+                apiVersion: user.openshift.io/v1
+                kind: Group
+                metadata:
+                  name: payment-ops
+                users:
+                  - payment-ops1
+            - complianceType: musthave
+              objectDefinition:
+                apiVersion: v1
+                kind: Namespace
+                metadata:
+                  name: payment-app
+                  labels:
+                    purpose: namespace-for-payment-ns-users
+            - complianceType: musthave
+              objectDefinition:
+                apiVersion: v1
+                kind: Namespace
+                metadata:
+                  name: payment-app
+                  labels:
+                    purpose: namespace-for-payment-ns-dev-users
+            - complianceType: musthave
+              objectDefinition:
+                apiVersion: v1
+                kind: Namespace
+                metadata:
+                  name: payment-app
+                  labels:
+                    purpose: namespace-for-payment-ns-ops-users
+            - complianceType: musthave
+              objectDefinition:
+                apiVersion: rbac.authorization.k8s.io/v1
+                kind: RoleBinding
+                metadata:
+                  name: payment-dev-Binding
+                  namespace: payment-app
+                roleRef:
+                  name: admin
+                  apiGroup: rbac.authorization.k8s.io
+                  kind: ClusterRole
+                subjects:
+                  - name: payment-dev
+                    apiGroup: rbac.authorization.k8s.io
+                    kind: Group
+            - complianceType: musthave
+              objectDefinition:
+                apiVersion: rbac.authorization.k8s.io/v1
+                kind: RoleBinding
+                metadata:
+                  name: payment-ops-Binding
+                  namespace: payment-app
+                roleRef:
+                  name: view
+                  apiGroup: rbac.authorization.k8s.io
+                  kind: ClusterRole
+                subjects:
+                  - name: payment-ops
+                    apiGroup: rbac.authorization.k8s.io
+                    kind: Group
+          remediationAction: inform
+          severity: high
+  remediationAction: enforce
+status:
+  compliant: Compliant
+  placement:
+    - placement: bank-policy-set-placement
+      placementBinding: bank-policy-set-placement
+      policySet: bank-policy-set
+    - placement: policy-rbac-payment-ns-placement
+      placementBinding: policy-rbac-payment-ns-placement
+  status:
+    - clustername: prod
+      clusternamespace: prod
+      compliant: Compliant
+---
+apiVersion: cluster.open-cluster-management.io/v1beta1
+kind: Placement
+metadata:
+  name: policy-rbac-payment-ns-placement
+  namespace: default
+  creationTimestamp: 2024-09-28T10:00:35Z
+  generation: 1
+  resourceVersion: "3976217"
+  uid: fd2e245f-e205-4ad2-b03c-e8d6103156b6
+spec:
+  predicates:
+    - requiredClusterSelector:
+        labelSelector:
+          matchExpressions:
+            - key: env
+              operator: In
+              values:
+                - uat
+                - prod
+  tolerations:
+    - key: cluster.open-cluster-management.io/unreachable
+      operator: Exists
+    - key: cluster.open-cluster-management.io/unavailable
+      operator: Exists
+status:
+  conditions:
+    - lastTransitionTime: 2024-09-28T10:00:35Z
+      message: Placement configurations check pass
+      reason: Succeedconfigured
+      status: "False"
+      type: PlacementMisconfigured
+    - lastTransitionTime: 2024-09-28T10:00:35Z
+      message: All cluster decisions scheduled
+      reason: AllDecisionsScheduled
+      status: "True"
+      type: PlacementSatisfied
+  decisionGroups:
+    - clusterCount: 1
+      decisionGroupIndex: 0
+      decisionGroupName: ""
+      decisions:
+        - policy-rbac-payment-ns-placement-decision-1
+  numberOfSelectedClusters: 1
+---
+apiVersion: policy.open-cluster-management.io/v1
+kind: PlacementBinding
+metadata:
+  name: policy-rbac-payment-ns-placement
+  namespace: default
+  creationTimestamp: 2024-09-28T10:00:36Z
+  generation: 1
+  resourceVersion: "3212752"
+  uid: 6475ca0e-cb7f-4bfe-b5c2-0983b58564cf
+placementRef:
+  name: policy-rbac-payment-ns-placement
+  apiGroup: cluster.open-cluster-management.io
+  kind: Placement
+subjects:
+  - name: policy-rbac-payment-ns
+    apiGroup: policy.open-cluster-management.io
+    kind: Policy
