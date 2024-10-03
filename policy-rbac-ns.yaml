@@ -1,0 +1,213 @@
+apiVersion: policy.open-cluster-management.io/v1
+kind: Policy
+metadata:
+  name: policy-rbac-adminiterpolicies
+  namespace: default
+  annotations:
+    policy.open-cluster-management.io/categories: AC Access Control
+    policy.open-cluster-management.io/controls: AC-3 Access Enforcement
+    policy.open-cluster-management.io/standards: NIST SP 800-53
+  creationTimestamp: 2024-09-25T11:11:07Z
+  generation: 10
+  managedFields:
+    - apiVersion: policy.open-cluster-management.io/v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:policy.open-cluster-management.io/categories: {}
+            f:policy.open-cluster-management.io/controls: {}
+            f:policy.open-cluster-management.io/standards: {}
+        f:spec:
+          .: {}
+          f:disabled: {}
+          f:policy-templates: {}
+          f:remediationAction: {}
+      manager: unknown
+      operation: Update
+      time: 2024-09-28T08:44:24Z
+    - apiVersion: policy.open-cluster-management.io/v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:status:
+          .: {}
+          f:compliant: {}
+          f:placement: {}
+          f:status: {}
+      manager: governance-policy-propagator
+      operation: Update
+      subresource: status
+      time: 2024-10-03T17:19:39Z
+  resourceVersion: "3998891"
+  uid: 3ff2d307-3043-4063-9210-b51796192201
+spec:
+  disabled: false
+  policy-templates:
+    - objectDefinition:
+        apiVersion: policy.open-cluster-management.io/v1
+        kind: ConfigurationPolicy
+        metadata:
+          name: policy-rbac-adminiterpolicies
+        spec:
+          object-templates:
+            - complianceType: musthave
+              objectDefinition:
+                apiVersion: user.openshift.io/v1
+                kind: Group
+                metadata:
+                  name: cbdc-app
+                users:
+            - complianceType: musthave
+              objectDefinition:
+                apiVersion: user.openshift.io/v1
+                kind: Group
+                metadata:
+                  name: cbdc-dev
+                users:
+                  - cbdc-dev1
+                  - cbdc-dev2
+            - complianceType: musthave
+              objectDefinition:
+                apiVersion: user.openshift.io/v1
+                kind: Group
+                metadata:
+                  name: cbdc-ops
+                users:
+                  - cbdc-ops1
+                  - cbdc-ops2
+            - complianceType: musthave
+              objectDefinition:
+                apiVersion: v1
+                kind: Namespace
+                metadata:
+                  name: cbdc-app
+                  labels:
+                    purpose: namespace-for-cbdcusers
+            - complianceType: musthave
+              objectDefinition:
+                apiVersion: v1
+                kind: Namespace
+                metadata:
+                  name: cbdc-app
+                  labels:
+                    purpose: namespace-for-cbdc-dev-users
+            - complianceType: musthave
+              objectDefinition:
+                apiVersion: v1
+                kind: Namespace
+                metadata:
+                  name: cbdc-app
+                  labels:
+                    purpose: namespace-for-cbdc-ops-users
+            - complianceType: musthave
+              objectDefinition:
+                apiVersion: rbac.authorization.k8s.io/v1
+                kind: RoleBinding
+                metadata:
+                  name: cbdc-dev-Binding
+                  namespace: cbdc-app
+                roleRef:
+                  name: admin
+                  apiGroup: rbac.authorization.k8s.io
+                  kind: ClusterRole
+                subjects:
+                  - name: cbdc-dev
+                    apiGroup: rbac.authorization.k8s.io
+                    kind: Group
+            - complianceType: musthave
+              objectDefinition:
+                apiVersion: rbac.authorization.k8s.io/v1
+                kind: RoleBinding
+                metadata:
+                  name: cbdc-ops-Binding
+                  namespace: cbdc-app
+                roleRef:
+                  name: view
+                  apiGroup: rbac.authorization.k8s.io
+                  kind: ClusterRole
+                subjects:
+                  - name: cbdc-ops
+                    apiGroup: rbac.authorization.k8s.io
+                    kind: Group
+          remediationAction: inform
+          severity: high
+  remediationAction: enforce
+status:
+  compliant: Compliant
+  placement:
+    - placement: bank-policy-set-placement
+      placementBinding: bank-policy-set-placement
+      policySet: bank-policy-set
+    - placement: policy-rbac-adminiterpolicies-placement
+      placementBinding: policy-rbac-adminiterpolicies-placement
+    - placement: policy-set-rbac-placement
+      placementBinding: policy-set-rbac-placement
+      policySet: policy-set-rbac
+  status:
+    - clustername: prod
+      clusternamespace: prod
+      compliant: Compliant
+---
+apiVersion: cluster.open-cluster-management.io/v1beta1
+kind: Placement
+metadata:
+  name: policy-rbac-adminiterpolicies-placement
+  namespace: default
+  creationTimestamp: 2024-09-25T11:11:08Z
+  generation: 2
+  resourceVersion: "3976273"
+  uid: c45434ce-8cb5-4133-9e74-8b02fca0d309
+spec:
+  clusterSets: []
+  predicates:
+    - requiredClusterSelector:
+        labelSelector:
+          matchExpressions:
+            - key: env
+              operator: In
+              values:
+                - prod
+                - uat
+  tolerations:
+    - key: cluster.open-cluster-management.io/unreachable
+      operator: Exists
+    - key: cluster.open-cluster-management.io/unavailable
+      operator: Exists
+status:
+  conditions:
+    - lastTransitionTime: 2024-09-25T11:11:08Z
+      message: Placement configurations check pass
+      reason: Succeedconfigured
+      status: "False"
+      type: PlacementMisconfigured
+    - lastTransitionTime: 2024-09-25T11:11:08Z
+      message: All cluster decisions scheduled
+      reason: AllDecisionsScheduled
+      status: "True"
+      type: PlacementSatisfied
+  decisionGroups:
+    - clusterCount: 1
+      decisionGroupIndex: 0
+      decisionGroupName: ""
+      decisions:
+        - policy-rbac-adminiterpolicies-placement-decision-1
+  numberOfSelectedClusters: 1
+---
+apiVersion: policy.open-cluster-management.io/v1
+kind: PlacementBinding
+metadata:
+  name: policy-rbac-adminiterpolicies-placement
+  namespace: default
+  creationTimestamp: 2024-09-25T11:11:08Z
+  generation: 1
+  resourceVersion: "2332692"
+  uid: fa2d88e6-5965-4582-907f-1da35e35eeee
+placementRef:
+  name: policy-rbac-adminiterpolicies-placement
+  apiGroup: cluster.open-cluster-management.io
+  kind: Placement
+subjects:
+  - name: policy-rbac-adminiterpolicies
+    apiGroup: policy.open-cluster-management.io
+    kind: Policy
