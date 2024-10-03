@@ -1,0 +1,129 @@
+apiVersion: policy.open-cluster-management.io/v1
+kind: Policy
+metadata:
+  name: policy-grc-cert
+  namespace: default
+  annotations:
+    policy.open-cluster-management.io/categories: SC System and Communications Protection
+    policy.open-cluster-management.io/controls: SC-8 Transmission Confidentiality and Integrity
+    policy.open-cluster-management.io/standards: NIST SP 800-53
+  creationTimestamp: 2024-09-18T06:02:33Z
+  generation: 1
+  managedFields:
+    - apiVersion: policy.open-cluster-management.io/v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:policy.open-cluster-management.io/categories: {}
+            f:policy.open-cluster-management.io/controls: {}
+            f:policy.open-cluster-management.io/standards: {}
+        f:spec:
+          .: {}
+          f:disabled: {}
+          f:policy-templates: {}
+      manager: unknown
+      operation: Update
+      time: 2024-09-18T06:02:33Z
+    - apiVersion: policy.open-cluster-management.io/v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:status:
+          .: {}
+          f:compliant: {}
+          f:placement: {}
+          f:status: {}
+      manager: governance-policy-propagator
+      operation: Update
+      subresource: status
+      time: 2024-10-03T11:25:41Z
+  resourceVersion: "3976207"
+  uid: 454da3e9-a426-4035-9f77-1849552791a5
+spec:
+  disabled: false
+  policy-templates:
+    - objectDefinition:
+        apiVersion: policy.open-cluster-management.io/v1
+        kind: CertificatePolicy
+        metadata:
+          name: policy-certificate
+        spec:
+          minimumDuration: 300h
+          namespaceSelector:
+            exclude:
+              - kube-*
+            include:
+              - default
+          remediationAction: inform
+          severity: low
+status:
+  compliant: Compliant
+  placement:
+    - placement: ban-policy-set-certificate-placement
+      placementBinding: ban-policy-set-certificate-placement
+      policySet: ban-policy-set-certificate
+    - placement: policy-grc-cert-placement
+      placementBinding: policy-grc-cert-placement
+  status:
+    - clustername: local-cluster
+      clusternamespace: local-cluster
+      compliant: Compliant
+    - clustername: prod
+      clusternamespace: prod
+      compliant: Compliant
+---
+apiVersion: cluster.open-cluster-management.io/v1beta1
+kind: Placement
+metadata:
+  name: policy-grc-cert-placement
+  namespace: default
+  creationTimestamp: 2024-09-18T06:02:34Z
+  generation: 1
+  resourceVersion: "3976191"
+  uid: 4e0cc340-db51-4d1e-b569-8645d0995329
+spec:
+  clusterSets:
+    - global
+  tolerations:
+    - key: cluster.open-cluster-management.io/unreachable
+      operator: Exists
+    - key: cluster.open-cluster-management.io/unavailable
+      operator: Exists
+status:
+  conditions:
+    - lastTransitionTime: 2024-09-18T06:02:34Z
+      message: Placement configurations check pass
+      reason: Succeedconfigured
+      status: "False"
+      type: PlacementMisconfigured
+    - lastTransitionTime: 2024-09-18T06:02:34Z
+      message: All cluster decisions scheduled
+      reason: AllDecisionsScheduled
+      status: "True"
+      type: PlacementSatisfied
+  decisionGroups:
+    - clusterCount: 2
+      decisionGroupIndex: 0
+      decisionGroupName: ""
+      decisions:
+        - policy-grc-cert-placement-decision-1
+  numberOfSelectedClusters: 2
+---
+apiVersion: policy.open-cluster-management.io/v1
+kind: PlacementBinding
+metadata:
+  name: policy-grc-cert-placement
+  namespace: default
+  creationTimestamp: 2024-09-18T06:02:34Z
+  generation: 1
+  resourceVersion: "695152"
+  uid: a8a52776-5c6e-410e-aff4-0b0d12fbdec4
+placementRef:
+  name: policy-grc-cert-placement
+  apiGroup: cluster.open-cluster-management.io
+  kind: Placement
+subjects:
+  - name: policy-grc-cert
+    apiGroup: policy.open-cluster-management.io
+    kind: Policy
