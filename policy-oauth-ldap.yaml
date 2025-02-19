@@ -14,7 +14,6 @@ spec:
   disabled: false
   policy-templates:
     # Create a secret that stores the LDAP bind password
-    # bindPassword: <password> --> Password used by the bindDN to connect with the LDAP. Since this object is a Kubernetes secret, encode the password in base64.
     - objectDefinition:
         apiVersion: policy.open-cluster-management.io/v1
         kind: ConfigurationPolicy
@@ -26,7 +25,7 @@ spec:
               objectDefinition:
                 apiVersion: v1
                 data:
-                  bindPassword: <password>
+                  bindPassword: YjFuZFBec3N3b3Jk
                 kind: Secret
                 metadata:
                   name: ldap-secret
@@ -35,9 +34,9 @@ spec:
           pruneObjectBehavior: DeleteIfCreated
           remediationAction: inform
           severity: high
+
     # Configure the OAuth for using LDAP as the identity provider
-    # bindDN: <bindDN> --> Full DN of the user account used to connect with the LDAP. Example: CN=user1,CN=Users,DC=example,DC=com
-    # url: <ldapurl> --> The LDAP url. The configured url is an RFC 2255 URL, which specifies the LDAP host and search parameters to use. The format is ldap://host:port/basedn?attribute?scope?filter
+  
     - objectDefinition:
         apiVersion: policy.open-cluster-management.io/v1
         kind: ConfigurationPolicy
@@ -53,27 +52,33 @@ spec:
                   name: cluster
                 spec:
                   identityProviders:
-                    - name: ldapidp
-                      ldap:
-                        attributes:
-                          name:
-                            - cn
-                          email:
-                            - mail
-                          id:
-                            - sAMAccountName
-                          preferredUsername:
-                            - sAMAccountName
-                        bindDN: <bindDN>
-                        bindPassword:
-                          name: ldap-secret
-                        insecure: true
-                        url: <ldapurl>
-                      mappingMethod: claim
-                      type: LDAP
-          pruneObjectBehavior: DeleteIfCreated
-          remediationAction: inform
-          severity: high
+                  - name: ldap 
+                  challenge: false
+                  login: true
+                  mappingMethod: claim 
+                  type: LDAP
+                  ldap:
+      attributes: 
+        id:
+        - dn
+        email:
+        - mail
+        name:
+        - cn
+        preferredUsername:
+        - uid
+      bindDN: "uid=openshiftworkshop,ou=Users,o=5e615ba46b812e7da02e93b5,dc=jumpcloud,dc=com" 
+      bindPassword: 
+        name: ldap-secret
+      ca: 
+        name: ca-config-map
+      insecure: false
+      url: "ldaps://ldap.jumpcloud.com/ou=Users,o=5e615ba46b812e7da02e93b5,dc=jumpcloud,dc=com?uid?sub?(memberOf=cn=ose-user,ou=Users,o=5e615ba46b812e7da02e93b5,dc=jumpcloud,dc=com)" 
+      tokenConfig:
+      accessTokenMaxAgeSeconds: 86400
+      pruneObjectBehavior: DeleteIfCreated
+      remediationAction: inform
+      severity: high
     # Create a CronJob in the cluster-ops namespace to sync with LDAP. In this example, AD is used.
     - objectDefinition:
         apiVersion: policy.open-cluster-management.io/v1
@@ -93,11 +98,7 @@ spec:
           remediationAction: inform
           severity: high
     # Create a ConfigMap that stores the LDAP sync configuration.
-    # url: <ldapurl> --> The LDAP url. The configured url is an RFC 2255 URL, which specifies the LDAP host and search parameters to use. The format is ldap://host:port/basedn?attribute?scope?filter
-    # bindDN: <bindDN> --> Full DN of the user account used to connect with the LDAP. Example: CN=user1,CN=Users,DC=example,DC=com
-    # bindPassword: <password> --> Password used by the bindDN to connect with the LDAP. Since this object is a Kubernetes configmap, the password is stored in plaintext.
-    # baseDN: <baseDN> --> The starting point an LDAP server uses when searching for users within your directory.
-    # filter: <filter> --> A valid LDAP search filter. If not provided, defaults to (objectClass=*)
+
     - objectDefinition:
         apiVersion: policy.open-cluster-management.io/v1
         kind: ConfigurationPolicy
@@ -111,32 +112,28 @@ spec:
                 data:
                   ldap-sync.yml: >
                     kind: LDAPSyncConfig
-
                     apiVersion: v1
+                    url: ldaps://ldap.jumpcloud.com
+                    bindDN: uid=openshiftworkshop,ou=Users,o=5e615ba46b812e7da02e93b5,dc=jumpcloud,dc=com
+                    bindPassword: b1ndP^ssword
+                    rfc2307:
+                      groupsQuery:
+                      baseDN: ou=Users,o=5e615ba46b812e7da02e93b5,dc=jumpcloud,dc=com
+                      derefAliases: never
+                      filter: '(|(cn=ose-*))'
+                      groupUIDAttribute: dn
+                      groupNameAttributes:
+                      - cn
+                     groupMembershipAttributes:
+                     - member
+                     usersQuery:
+                     baseDN: ou=Users,o=5e615ba46b812e7da02e93b5,dc=jumpcloud,dc=com
+                     derefAliases: never
+                     userUIDAttribute: dn
+                     userNameAttributes:
+                    - uid
 
-                    url: ldap://<ldapurl>
-
-                    insecure: true
-
-                    bindDN: "<ldapbindDN>"
-
-                    bindPassword: '<ldapbindPassword>'
-
-                    augmentedActiveDirectory:
-                        groupsQuery:
-                            derefAliases: never
-                            pageSize: 0
-                        groupUIDAttribute: dn
-                        groupNameAttributes: [ cn ]
-                        groupMembershipAttributes: [ memberOf ]
-                        usersQuery:
-                            baseDN: "<baseDN>"
-                            scope: sub
-                            derefAliases: never
-                            pageSize: 0
-                            filter: <filter>
-                        userNameAttributes: [ sAMAccountName ]
-                kind: ConfigMap
+                                    kind: ConfigMap
                 metadata:
                   name: ldap-config
                   namespace: cluster-ops
